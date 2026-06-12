@@ -1015,8 +1015,11 @@ async function eliminaFoglio(idx) {
 // ════════════════════════════════════════
 function formataData(d) {
   if (!d) return '–';
-  const [y,m,g] = d.split('-');
-  return `${g}/${m}/${y}`;
+  // gestisce sia formato ISO (2026-06-03T22:00:00.000Z) che semplice (2026-06-03)
+  const str = String(d);
+  const match = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+  return str;
 }
 
 // ════════════════════════════════════════
