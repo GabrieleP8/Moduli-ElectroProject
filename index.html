@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Foglio Lavoro – ElecProject</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --primary: #1a3a5c;
+      --accent: #f0a500;
+      --accent-light: #fff8e6;
+      --border: #dde3ee;
+      --text: #1e2b3a;
+      --muted: #7a8899;
+      --danger: #c0392b;
+      --success: #27ae60;
+      --radius: 10px;
+      --shadow: 0 2px 16px rgba(26,58,92,0.09);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* HEADER */
+    header { background: var(--primary); color: #fff; padding: 18px 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+    header .logo { width: 40px; height: 40px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: var(--primary); }
+    header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.02em; }
+    header p  { font-size: 0.78rem; opacity: 0.7; margin-top: 2px; }
+
+    /* MAIN */
+    main { max-width: 760px; margin: 32px auto; padding: 0 16px 60px; }
+
+    /* TABS */
+    .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 28px; }
+    .tab-btn { padding: 10px 20px; background: none; border: none; cursor: pointer; font-size: 0.88rem; color: var(--muted); font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; white-space: nowrap; }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--accent); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* CARD */
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px 22px; margin-bottom: 18px; }
+    .card-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* FORM */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.03em; text-transform: uppercase; }
+    input[type="text"], input[type="date"], input[type="time"], textarea, select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 7px; font-size: 0.95rem; color: var(--text); background: #f9fafb; transition: border-color 0.2s, background 0.2s; outline: none; font-family: inherit; }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); background: #fff; }
+
+    /* ORE */
+    .ore-display { background: var(--accent-light); border: 1.5px solid var(--accent); border-radius: 7px; padding: 10px 14px; font-size: 1.1rem; font-weight: 700; color: var(--primary); text-align: center; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+    /* AUTOCOMPLETE */
+    .autocomplete-wrap { position: relative; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1.5px solid var(--primary); border-top: none; border-radius: 0 0 8px 8px; z-index: 100; max-height: 180px; overflow-y: auto; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+    .autocomplete-list div { padding: 9px 14px; cursor: pointer; font-size: 0.92rem; transition: background 0.15s; }
+    .autocomplete-list div:hover { background: var(--accent-light); }
+
+    /* MATERIALI */
+    .materiali-header { display: grid; grid-template-columns: 1fr 90px 70px 36px; gap: 8px; margin-bottom: 6px; }
+    .materiali-header span { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .materiale-row { display: grid; grid-template-columns: 1fr 90px 70px 36px; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .materiale-row input { margin: 0; }
+    .unit-badge { background: var(--bg); border: 1.5px solid var(--border); border-radius: 7px; padding: 10px 8px; font-size: 0.82rem; color: var(--muted); font-weight: 600; text-align: center; }
+
+    /* BUTTONS */
+    .btn-del { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.3rem; width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+    .btn-del:hover { background: #fdecea; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 700; font-family: inherit; transition: all 0.18s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #112840; }
+    .btn-accent { background: var(--accent); color: var(--primary); }
+    .btn-accent:hover { background: #d4920a; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn-outline:hover { background: var(--primary); color: #fff; }
+    .btn-ghost { background: var(--bg); border: 1.5px solid var(--border); color: var(--text); }
+    .btn-ghost:hover { background: var(--border); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #1e8a4a; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; justify-content: flex-end; }
+    .btn-add-row { background: none; border: 1.5px dashed var(--border); color: var(--muted); border-radius: 7px; padding: 8px 16px; cursor: pointer; font-size: 0.85rem; width: 100%; transition: all 0.18s; font-family: inherit; }
+    .btn-add-row:hover { border-color: var(--primary); color: var(--primary); background: var(--accent-light); }
+
+    /* ── ARCHIVIO TOOLBAR ── */
+    .archivio-toolbar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 18px; align-items: center;
+    }
+    .archivio-toolbar .search-wrap {
+      position: relative; flex: 1; min-width: 180px;
+    }
+    .archivio-toolbar .search-wrap input {
+      padding-left: 36px;
+    }
+    .search-icon {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); pointer-events: none; font-size: 15px;
+    }
+    .view-toggle { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .view-toggle button { background: var(--card); border: none; padding: 9px 14px; cursor: pointer; font-size: 0.82rem; color: var(--muted); font-weight: 600; transition: all 0.18s; white-space: nowrap; }
+    .view-toggle button.active { background: var(--primary); color: #fff; }
+
+    /* MULTI-SELECT OPERAI */
+    .multi-select-wrap { position: relative; }
+    .multi-select-btn {
+      border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; font-size: 0.85rem; color: var(--text);
+      background: var(--card); cursor: pointer; font-family: inherit;
+      font-weight: 600; outline: none; white-space: nowrap;
+      display: flex; align-items: center; gap: 6px; min-width: 160px;
+      transition: border-color 0.2s;
+    }
+    .multi-select-btn:hover, .multi-select-btn.open { border-color: var(--primary); }
+    .multi-select-btn .badge {
+      background: var(--primary); color: #fff;
+      font-size: 0.7rem; padding: 1px 7px; border-radius: 20px; line-height: 1.5;
+    }
+    .multi-select-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0;
+      background: #fff; border: 1.5px solid var(--primary);
+      border-radius: 8px; z-index: 200; min-width: 180px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.13); overflow: hidden;
+    }
+    .multi-select-dropdown.open { display: block; }
+    .multi-select-dropdown label {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; cursor: pointer; font-size: 0.9rem;
+      color: var(--text); text-transform: none; letter-spacing: 0;
+      font-weight: 500; transition: background 0.15s;
+      border-bottom: 1px solid var(--border); margin: 0;
+    }
+    .multi-select-dropdown label:last-of-type { border-bottom: none; }
+    .multi-select-dropdown label:hover { background: var(--accent-light); }
+    .multi-select-dropdown input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: var(--primary);
+      cursor: pointer; flex-shrink: 0; min-width: 16px;
+      border: none; background: none; padding: 0;
+    }
+    .ms-reset-row {
+      padding: 7px 14px; border-top: 1px solid var(--border); text-align: center;
+    }
+    .ms-reset-row button {
+      background: none; border: none; color: var(--muted);
+      font-size: 0.78rem; cursor: pointer; font-family: inherit; font-weight: 600;
+    }
+    .ms-reset-row button:hover { color: var(--danger); }
+
+    /* FOGLIO CARD (lista) */
+    .foglio-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; cursor: pointer; border-left: 4px solid var(--accent); transition: box-shadow 0.18s, transform 0.15s; }
+    .foglio-card:hover { box-shadow: 0 4px 24px rgba(26,58,92,0.15); transform: translateY(-1px); }
+    .foglio-card-info { flex: 1; }
+    .foglio-card-info strong { font-size: 0.95rem; color: var(--primary); }
+    .foglio-card-info p { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+    .foglio-card-date { font-size: 0.78rem; background: var(--accent-light); color: var(--primary); font-weight: 700; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+    .foglio-actions { display: flex; gap: 6px; }
+    .btn-sm { padding: 6px 12px; font-size: 0.78rem; border-radius: 6px; }
+
+    /* ── CANTIERE GROUP (vista raggruppata) ── */
+    .cantiere-group { margin-bottom: 22px; }
+    .cantiere-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px;
+      background: var(--primary);
+      border-radius: var(--radius) var(--radius) 0 0;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cantiere-header h3 { color: #fff; font-size: 0.95rem; flex: 1; }
+    .cantiere-stats { display: flex; gap: 10px; align-items: center; }
+    .stat-pill {
+      background: rgba(255,255,255,0.15);
+      color: #fff; font-size: 0.75rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap;
+    }
+    .stat-pill.ore { background: var(--accent); color: var(--primary); }
+    .cantiere-arrow { color: rgba(255,255,255,0.7); font-size: 1rem; transition: transform 0.2s; }
+    .cantiere-header.collapsed .cantiere-arrow { transform: rotate(-90deg); }
+    .cantiere-fogli { border: 1.5px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
+    .cantiere-fogli .foglio-card { border-radius: 0; margin-bottom: 0; border-left: 4px solid var(--accent); border-bottom: 1px solid var(--border); }
+    .cantiere-fogli .foglio-card:last-child { border-bottom: none; }
+
+    /* ── RIEPILOGO CANTIERI ── */
+    .cantiere-summary-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 18px 20px;
+      margin-bottom: 12px; cursor: pointer;
+      border-left: 5px solid var(--primary);
+      transition: box-shadow 0.18s, transform 0.15s;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .cantiere-summary-card:hover { box-shadow: 0 4px 24px rgba(26,58,92,0.15); transform: translateY(-1px); }
+    .cantiere-summary-info { flex: 1; }
+    .cantiere-summary-info h3 { font-size: 1rem; color: var(--primary); margin-bottom: 5px; }
+    .cantiere-summary-info p { font-size: 0.8rem; color: var(--muted); }
+    .cantiere-summary-stats { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+    .ore-totali-badge { background: var(--accent); color: var(--primary); font-weight: 800; font-size: 1rem; padding: 6px 14px; border-radius: 20px; white-space: nowrap; }
+    .fogli-count { font-size: 0.75rem; color: var(--muted); font-weight: 600; text-align: right; }
+
+    /* EMPTY */
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--muted); }
+    .empty-state p { font-size: 0.95rem; margin-top: 12px; }
+
+    /* MODAL */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; align-items: center; justify-content: center; padding: 16px; }
+    .modal-bg.open { display: flex; }
+    .modal { background: #fff; border-radius: var(--radius); max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 28px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h2 { font-size: 1.1rem; color: var(--primary); }
+    .btn-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--muted); padding: 0 6px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .detail-field label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
+    .detail-field p { font-size: 0.95rem; color: var(--text); }
+    .detail-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .detail-table th { background: var(--bg); font-size: 0.75rem; text-transform: uppercase; color: var(--muted); padding: 7px 10px; text-align: left; }
+    .detail-table td { padding: 8px 10px; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--primary); color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.18); transform: translateY(60px); opacity: 0; transition: all 0.3s; z-index: 9999; pointer-events: none; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* RISULTATI RICERCA */
+    .risultati-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; margin-bottom: 12px; padding: 6px 12px; background: var(--accent-light); border-radius: 6px; }
+
+    @media (max-width: 520px) {
+      .form-row { grid-template-columns: 1fr; }
+      .form-row.three { grid-template-columns: 1fr 1fr; }
+      .materiale-row { grid-template-columns: 1fr 72px 60px 36px; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .actions { justify-content: stretch; }
+      .actions .btn { flex: 1; justify-content: center; }
+      .archivio-toolbar { flex-direction: column; align-items: stretch; }
+      .view-toggle { width: 100%; }
+      .view-toggle button { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">EP</div>
+  <div>
+    <h1>ElecProject</h1>
+    <p>Gestione Fogli Lavoro</p>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('nuovo', this)">✏️ Nuovo Foglio</button>
+    <button class="tab-btn" onclick="showTab('archivio', this)">📂 Archivio</button>
+    <button class="tab-btn" onclick="showTab('cantieri', this)">🏗 Cantieri</button>
+  </div>
+
+  <!-- ── TAB NUOVO ── -->
+  <div class="tab-pane active" id="tab-nuovo">
+    <div class="card">
+      <div class="card-title">Informazioni generali</div>
+      <div class="form-row">
+        <div><label>Data</label><input type="date" id="data" /></div>
+        <div><label>Cantiere / Indirizzo</label><input type="text" id="cantiere" placeholder="es. Villa 10/11" /></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Effettuato da</div>
+      <div id="operai-container"></div>
+      <button class="btn-add-row" onclick="aggiungiOperaio()">+ Aggiungi operaio</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Orario di lavoro</div>
+      <div class="form-row three">
+        <div><label>Ora inizio</label><input type="time" id="ora-inizio" oninput="calcolaOre()" /></div>
+        <div><label>Ora fine</label><input type="time" id="ora-fine" oninput="calcolaOre()" /></div>
+        <div><label>Ore totali</label><div class="ore-display" id="ore-totali">–</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Intervento</div>
+      <div class="form-row full">
+        <div><label>Descrizione lavoro</label><textarea id="intervento" rows="3" placeholder="Descrivi il lavoro eseguito..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Materiale utilizzato</div>
+      <div class="materiali-header">
+        <span>Materiale</span><span>Quantità</span><span>Unità</span><span></span>
+      </div>
+      <div id="materiali-container"></div>
+      <button class="btn-add-row" onclick="aggiungiMateriale()">+ Aggiungi materiale</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="resetForm()">🗑 Cancella</button>
+      <button class="btn btn-accent" onclick="salvaBozza()">💾 Salva</button>
+      <button class="btn btn-primary" onclick="esportaPDF()">📄 Esporta PDF</button>
+    </div>
+  </div>
+
+  <!-- ── TAB ARCHIVIO ── -->
+  <div class="tab-pane" id="tab-archivio">
+    <div class="archivio-toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-operaio" placeholder="Cerca per operaio..." oninput="renderArchivio()" />
+      </div>
+      <div class="multi-select-wrap" id="ms-wrap">
+        <button class="multi-select-btn" id="ms-btn" onclick="toggleMultiSelect()">
+          <span id="ms-label">👷 Tutti gli operai</span>
+          <span class="badge" id="ms-badge" style="display:none">0</span>
+        </button>
+        <div class="multi-select-dropdown" id="ms-dropdown">
+          <div id="ms-options"></div>
+          <div class="ms-reset-row"><button onclick="resetFiltroOperai()">✕ Deseleziona tutti</button></div>
+        </div>
+      </div>
+      <div class="view-toggle">
+        <button id="btn-view-lista" class="active" onclick="setView('lista')">☰ Lista</button>
+        <button id="btn-view-grouped" onclick="setView('grouped')">⊞ Gruppi</button>
+      </div>
+    </div>
+    <div id="lista-fogli"></div>
+  </div>
+
+  <!-- ── TAB CANTIERI ── -->
+  <div class="tab-pane" id="tab-cantieri">
+    <div id="riepilogo-cantieri"></div>
+  </div>
+</main>
+
+<!-- MODAL DETTAGLIO -->
+<div class="modal-bg" id="modal-bg" onclick="chiudiModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Foglio Lavoro</h2>
+      <button class="btn-close" onclick="chiudiModalDiretto()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <div class="actions" style="margin-top:20px;">
+      <button class="btn btn-ghost btn-sm" onclick="chiudiModalDiretto()">Chiudi</button>
+      <button class="btn btn-outline btn-sm" onclick="modificaFoglio()">✏️ Modifica</button>
+      <button class="btn btn-primary btn-sm" onclick="esportaPDFFoglio()">📄 PDF</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// DATI
+// ════════════════════════════════════════
+const OPERAI = ['Lorenzo', 'Gianni', 'Paolo', 'Peppe', 'Gabriele'];
+
+const MATERIALI_CATALOG = [
+  { nome: 'Filo da 1,5',         unita: 'mt' },
+  { nome: 'Filo da 2,5',         unita: 'mt' },
+  { nome: 'Filo da 4',           unita: 'mt' },
+  { nome: 'Filo da 6',           unita: 'mt' },
+  { nome: 'Cavo di rete',        unita: 'mt' },
+  { nome: 'Cavo TV',             unita: 'mt' },
+  { nome: 'Tubo da 20 nero',     unita: 'mt' },
+  { nome: 'Tubo da 20 colorato', unita: 'mt' },
+  { nome: 'Tubo da 25 nero',     unita: 'mt' },
+  { nome: 'Tubo da 25 colorato', unita: 'mt' },
+];
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxBgHLMSfY3IuFk0D87I-rBGv2fxIBkXwF3eKku7ZWdwVGaBr-0Dqewz7gGbNSXHHItvQ/exec';
+
+let fogli = [];
+let foglioCorrenteIdx = null;
+let vistaCorrente = 'lista';
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('data').value = today();
+  aggiungiOperaio();
+  aggiungiMateriale();
+  popolaFiltroOperai();
+  caricaFogliRemoti();
+});
+
+async function caricaFogliRemoti() {
+  mostraLoading(true);
+  try {
+    const res = await fetch(SCRIPT_URL);
+    const data = await res.json();
+    if (data.fogli) {
+      fogli = data.fogli.reverse();
+    }
+  } catch(e) {
+    mostraToast('⚠️ Errore connessione. Riprova.');
+  } finally {
+    mostraLoading(false);
+    renderArchivio();
+    renderRiepilogoCantieri();
+  }
+}
+
+function mostraLoading(show) {
+  let el = document.getElementById('loading-bar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loading-bar';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;height:3px;background:var(--accent);z-index:9999;transition:opacity 0.3s;';
+    document.body.appendChild(el);
+  }
+  el.style.opacity = show ? '1' : '0';
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'archivio') { renderArchivio(); }
+  if (name === 'cantieri') renderRiepilogoCantieri();
+}
+
+// ════════════════════════════════════════
+// VISTA ARCHIVIO
+// ════════════════════════════════════════
+function setView(v) {
+  vistaCorrente = v;
+  document.getElementById('btn-view-lista').classList.toggle('active', v === 'lista');
+  document.getElementById('btn-view-grouped').classList.toggle('active', v === 'grouped');
+  renderArchivio();
+}
+
+// ════════════════════════════════════════
+// FILTRO OPERAI
+// ════════════════════════════════════════
+function popolaFiltroOperai() {
+  const container = document.getElementById('ms-options');
+  OPERAI.forEach(o => {
+    const lbl = document.createElement('label');
+    const cb  = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = o; cb.className = 'ms-cb';
+    cb.addEventListener('change', () => { aggiornaLabelMultiSelect(); renderArchivio(); });
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(o));
+    container.appendChild(lbl);
+  });
+}
+
+function toggleMultiSelect() {
+  const dd  = document.getElementById('ms-dropdown');
+  const btn = document.getElementById('ms-btn');
+  const isOpen = dd.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+}
+
+function aggiornaLabelMultiSelect() {
+  const sel = operaiFiltroSelezionati();
+  const badge = document.getElementById('ms-badge');
+  const lbl   = document.getElementById('ms-label');
+  if (!sel.length) {
+    lbl.textContent = '👷 Tutti gli operai';
+    badge.style.display = 'none';
+  } else if (sel.length === 1) {
+    lbl.textContent = '👷 ' + sel[0];
+    badge.style.display = 'none';
+  } else {
+    lbl.textContent = '👷 Operai';
+    badge.textContent = sel.length;
+    badge.style.display = 'inline';
+  }
+}
+
+function operaiFiltroSelezionati() {
+  return [...document.querySelectorAll('.ms-cb:checked')].map(c => c.value.toLowerCase());
+}
+
+function resetFiltroOperai() {
+  document.querySelectorAll('.ms-cb').forEach(c => c.checked = false);
+  aggiornaLabelMultiSelect();
+  renderArchivio();
+}
+
+function fogliFiltrati() {
+  const testoRicerca = (document.getElementById('search-operaio')?.value || '').toLowerCase().trim();
+  const selezionati  = operaiFiltroSelezionati(); // array di nomi lowercase
+
+  return fogli.filter(f => {
+    const operaiLower = (f.operai || []).map(o => o.toLowerCase());
+    const matchTesto = !testoRicerca || operaiLower.some(o => o.includes(testoRicerca));
+    const matchSel   = !selezionati.length || selezionati.every(s => operaiLower.includes(s));
+    return matchTesto && matchSel;
+  });
+}
+
+// ════════════════════════════════════════
+// RENDER ARCHIVIO
+// ════════════════════════════════════════
+function renderArchivio() {
+  const el = document.getElementById('lista-fogli');
+  const filtrati = fogliFiltrati();
+
+  if (!fogli.length) {
+    el.innerHTML = emptyState('Nessun foglio salvato ancora.');
+    return;
+  }
+  if (!filtrati.length) {
+    el.innerHTML = emptyState('Nessun foglio trovato per questa ricerca.');
+    return;
+  }
+
+  const testoRicerca = document.getElementById('search-operaio')?.value.trim();
+  const filtroAttivo = testoRicerca || operaiFiltroSelezionati().length;
+
+  let html = '';
+  if (filtroAttivo) {
+    html += `<div class="risultati-label">🔍 ${filtrati.length} foglio${filtrati.length !== 1 ? 'i' : ''} trovato${filtrati.length !== 1 ? 'i' : ''}</div>`;
+  }
+
+  if (vistaCorrente === 'lista') {
+    html += filtrati.map(f => cardFoglio(fogli.indexOf(f))).join('');
+  } else {
+    html += renderGruppi(filtrati);
+  }
+
+  el.innerHTML = html;
+}
+
+function renderGruppi(lista) {
+  // raggruppa per cantiere
+  const gruppi = {};
+  lista.forEach(f => {
+    const key = (f.cantiere || 'Cantiere non specificato').trim();
+    if (!gruppi[key]) gruppi[key] = [];
+    gruppi[key].push(f);
+  });
+
+  return Object.entries(gruppi).map(([cantiere, fogliGruppo]) => {
+    const oreMin = sommaOreMinuti(fogliGruppo);
+    const oreLabel = minutiALabel(oreMin);
+    const operaiSet = [...new Set(fogliGruppo.flatMap(f => f.operai))].join(', ');
+
+    const foliHtml = fogliGruppo.map(f => {
+      const idx = fogli.indexOf(f);
+      return `
+        <div class="foglio-card" onclick="apriModal(${idx})">
+          <div class="foglio-card-info">
+            <strong>${f.cantiere || 'Cantiere non specificato'}</strong>
+            <p>${f.operai.join(', ') || '–'} · ${f.oreTotali !== '–' ? f.oreTotali : 'Ore n.d.'}</p>
+          </div>
+          <span class="foglio-card-date">${formataData(f.data)}</span>
+          <div class="foglio-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-ghost btn-sm" onclick="eliminaFoglio(${idx})">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="cantiere-group">
+        <div class="cantiere-header" onclick="toggleGruppo(this)">
+          <h3>📍 ${cantiere}</h3>
+          <div class="cantiere-stats">
+            <span class="stat-pill">${fogliGruppo.length} foglio${fogliGruppo.length !== 1 ? 'i' : ''}</span>
+            <span class="stat-pill ore">⏱ ${oreLabel}</span>
+          </div>
+          <span class="cantiere-arrow">▾</span>
+        </div>
+        <div class="cantiere-fogli">${foliHtml}</div>
+      </div>`;
+  }).join('');
+}
+
+function toggleGruppo(header) {
+  header.classList.toggle('collapsed');
+  const fogli = header.nextElementSibling;
+  fogli.style.display = header.classList.contains('collapsed') ? 'none' : 'block';
+}
+
+// ════════════════════════════════════════
+// RIEPILOGO CANTIERI
+// ════════════════════════════════════════
+function renderRiepilogoCantieri() {
+  const el = document.getElementById('riepilogo-cantieri');
+  if (!fogli.length) { el.innerHTML = emptyState('Nessun foglio salvato ancora.'); return; }
+
+  const gruppi = {};
+  fogli.forEach(f => {
+    const key = (f.cantiere || 'Cantiere non specificato').trim();
+    if (!gruppi[key]) gruppi[key] = [];
+    gruppi[key].push(f);
+  });
+
+  // ordina per ore totali decrescenti
+  const sorted = Object.entries(gruppi).sort((a, b) =>
+    sommaOreMinuti(b[1]) - sommaOreMinuti(a[1])
+  );
+
+  el.innerHTML = sorted.map(([cantiere, fogliGruppo]) => {
+    const oreMin  = sommaOreMinuti(fogliGruppo);
+    const oreLabel = minutiALabel(oreMin);
+    const operaiSet = [...new Set(fogliGruppo.flatMap(f => f.operai || []))];
+    const dataMin = fogliGruppo.map(f => f.data).filter(Boolean).sort()[0];
+    const dataMax = fogliGruppo.map(f => f.data).filter(Boolean).sort().slice(-1)[0];
+    const periodoLabel = dataMin === dataMax
+      ? formataData(dataMin)
+      : `${formataData(dataMin)} – ${formataData(dataMax)}`;
+
+    return `
+      <div class="cantiere-summary-card" onclick="apriDettaglioCantiere('${cantiere.replace(/'/g,"\\'")}')">
+        <div class="cantiere-summary-info">
+          <h3>📍 ${cantiere}</h3>
+          <p>👷 ${operaiSet.join(', ') || '–'}</p>
+          <p style="margin-top:3px">📅 ${periodoLabel} · ${fogliGruppo.length} foglio${fogliGruppo.length !== 1 ? 'i' : ''}</p>
+        </div>
+        <div class="cantiere-summary-stats">
+          <span class="ore-totali-badge">⏱ ${oreLabel}</span>
+          <span class="fogli-count">${fogliGruppo.length} intervent${fogliGruppo.length !== 1 ? 'i' : 'o'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function apriDettaglioCantiere(cantiere) {
+  // switcha all'archivio filtrato per quel cantiere
+  // mostra la vista raggruppata e filtra
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-archivio').classList.add('active');
+  document.querySelectorAll('.tab-btn')[1].classList.add('active');
+
+  // azzera filtri e metti vista grouped
+  document.getElementById('search-operaio').value = '';
+  resetFiltroOperai();
+  vistaCorrente = 'grouped';
+  document.getElementById('btn-view-lista').classList.remove('active');
+  document.getElementById('btn-view-grouped').classList.add('active');
+
+  // filtra i fogli a quel cantiere manualmente
+  const el = document.getElementById('lista-fogli');
+  const fogliCantiere = fogli.filter(f =>
+    (f.cantiere || 'Cantiere non specificato').trim() === cantiere
+  );
+
+  const oreMin = sommaOreMinuti(fogliCantiere);
+  const operaiSet = [...new Set(fogliCantiere.flatMap(f => f.operai || []))];
+
+  const foliHtml = fogliCantiere.map(f => {
+    const idx = fogli.indexOf(f);
+    return `
+      <div class="foglio-card" onclick="apriModal(${idx})">
+        <div class="foglio-card-info">
+          <strong>${f.cantiere || '–'}</strong>
+          <p>${f.operai.join(', ') || '–'} · ${f.oreTotali !== '–' ? f.oreTotali : 'Ore n.d.'}</p>
+        </div>
+        <span class="foglio-card-date">${formataData(f.data)}</span>
+        <div class="foglio-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" onclick="eliminaFoglio(${idx})">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="cantiere-group">
+      <div class="cantiere-header" onclick="toggleGruppo(this)">
+        <h3>📍 ${cantiere}</h3>
+        <div class="cantiere-stats">
+          <span class="stat-pill">${fogliCantiere.length} fogli</span>
+          <span class="stat-pill ore">⏱ ${minutiALabel(oreMin)}</span>
+          <span class="stat-pill">👷 ${operaiSet.join(', ')}</span>
+        </div>
+        <span class="cantiere-arrow">▾</span>
+      </div>
+      <div class="cantiere-fogli">${foliHtml}</div>
+    </div>`;
+}
+
+// ════════════════════════════════════════
+// HELPERS ORE
+// ════════════════════════════════════════
+function oreStringaAMinuti(str) {
+  if (!str || str === '–') return 0;
+  const h = str.match(/(\d+)h/);
+  const m = str.match(/(\d+)min/);
+  return (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0);
+}
+
+function sommaOreMinuti(lista) {
+  return lista.reduce((acc, f) => acc + oreStringaAMinuti(f.oreTotali), 0);
+}
+
+function minutiALabel(min) {
+  if (!min) return '0h';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}min`;
+}
+
+// ════════════════════════════════════════
+// CARD FOGLIO
+// ════════════════════════════════════════
+function cardFoglio(idx) {
+  const f = fogli[idx];
+  return `
+    <div class="foglio-card" onclick="apriModal(${idx})">
+      <div class="foglio-card-info">
+        <strong>${f.cantiere || 'Cantiere non specificato'}</strong>
+        <p>${f.operai.join(', ') || '–'} · ${f.oreTotali !== '–' ? f.oreTotali : 'Ore non specificate'}</p>
+      </div>
+      <span class="foglio-card-date">${formataData(f.data)}</span>
+      <div class="foglio-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-sm" onclick="eliminaFoglio(${idx})">🗑</button>
+        <button class="btn btn-primary btn-sm" onclick="apriModal(${idx})">Apri</button>
+      </div>
+    </div>`;
+}
+
+function emptyState(msg) {
+  return `<div class="empty-state">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+    </svg>
+    <p>${msg}</p>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// OPERAI
+// ════════════════════════════════════════
+function aggiungiOperaio(val = '') {
+  const c = document.getElementById('operai-container');
+  const div = document.createElement('div');
+  div.style.display = 'grid';
+  div.style.gridTemplateColumns = '1fr 36px';
+  div.style.gap = '8px';
+  div.style.marginBottom = '10px';
+
+  const uid = 'ac-op-' + Math.random().toString(36).slice(2);
+  div.innerHTML = `
+    <div class="autocomplete-wrap">
+      <input type="text" placeholder="Nome operaio..." value="${val}" class="operaio-input" />
+      <div class="autocomplete-list" id="${uid}" style="display:none"></div>
+    </div>
+    <button class="btn-del" onclick="this.closest('div').remove()" title="Rimuovi">×</button>`;
+
+  const inp = div.querySelector('input');
+  inp.addEventListener('input',  () => autocompleteOperai(inp, uid));
+  inp.addEventListener('focus',  () => autocompleteOperai(inp, uid));
+  c.appendChild(div);
+}
+
+function operaiGiaInseriti() {
+  return [...document.querySelectorAll('.operaio-input')]
+    .map(i => i.value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function autocompleteOperai(input, containerId) {
+  const giàInseriti = operaiGiaInseriti().filter(o => o !== input.value.trim().toLowerCase());
+  const listaFiltrata = OPERAI.filter(o => !giàInseriti.includes(o.toLowerCase()));
+  autocomplete(input, listaFiltrata, containerId);
+}
+
+// ════════════════════════════════════════
+// MATERIALI
+// ════════════════════════════════════════
+function aggiungiMateriale(mat = '') {
+  const c = document.getElementById('materiali-container');
+  const row = document.createElement('div');
+  row.className = 'materiale-row';
+  const uid = 'ac-mat-' + Math.random().toString(36).slice(2);
+
+  row.innerHTML = `
+    <div class="autocomplete-wrap">
+      <input type="text" placeholder="es. Filo da 2,5" value="${mat}" class="mat-input" />
+      <div class="autocomplete-list" id="${uid}" style="display:none"></div>
+    </div>
+    <input type="number" placeholder="0" min="0" step="0.1" class="qty-input" />
+    <div class="unit-badge">–</div>
+    <button class="btn-del" onclick="this.closest('.materiale-row').remove()" title="Rimuovi">×</button>`;
+
+  const inp    = row.querySelector('.mat-input');
+  const badge  = row.querySelector('.unit-badge');
+
+  inp.addEventListener('input', () => {
+    autocomplete(inp, MATERIALI_CATALOG.map(m => m.nome), uid);
+    aggiornaUnita(inp.value, badge);
+  });
+  inp.addEventListener('focus', () => autocomplete(inp, MATERIALI_CATALOG.map(m => m.nome), uid));
+  row._updateUnit = (v) => aggiornaUnita(v, badge);
+  if (mat) aggiornaUnita(mat, badge);
+
+  c.appendChild(row);
+  return row;
+}
+
+function aggiornaUnita(nome, badge) {
+  const found = MATERIALI_CATALOG.find(m => m.nome.toLowerCase() === nome.toLowerCase());
+  badge.textContent = found ? found.unita : '–';
+}
+
+// ════════════════════════════════════════
+// AUTOCOMPLETE
+// ════════════════════════════════════════
+function autocomplete(input, lista, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const val = input.value.toLowerCase().trim();
+  const matches = val === '' ? lista : lista.filter(i => i.toLowerCase().includes(val));
+  if (!matches.length) { container.style.display = 'none'; return; }
+  container.innerHTML = '';
+  matches.forEach(item => {
+    const d = document.createElement('div');
+    d.textContent = item;
+    d.addEventListener('mousedown', e => {
+      e.preventDefault();
+      input.value = item;
+      container.style.display = 'none';
+      const row = input.closest('.materiale-row');
+      if (row && row._updateUnit) row._updateUnit(item);
+    });
+    container.appendChild(d);
+  });
+  container.style.display = 'block';
+}
+
+document.addEventListener('click', e => {
+  document.querySelectorAll('.autocomplete-list').forEach(el => {
+    const wrap = el.parentElement;
+    if (!wrap || !wrap.contains(e.target)) el.style.display = 'none';
+  });
+  // chiudi multi-select se click fuori
+  const wrap = document.getElementById('ms-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('ms-dropdown')?.classList.remove('open');
+    document.getElementById('ms-btn')?.classList.remove('open');
+  }
+});
+
+// ════════════════════════════════════════
+// CALCOLO ORE
+// ════════════════════════════════════════
+function calcolaOre() {
+  const inizio = document.getElementById('ora-inizio').value;
+  const fine   = document.getElementById('ora-fine').value;
+  const display = document.getElementById('ore-totali');
+  if (!inizio || !fine) { display.textContent = '–'; return; }
+  const [hI, mI] = inizio.split(':').map(Number);
+  const [hF, mF] = fine.split(':').map(Number);
+  let diff = (hF * 60 + mF) - (hI * 60 + mI);
+  if (diff < 0) diff += 1440;
+  const h = Math.floor(diff / 60), m = diff % 60;
+  display.textContent = m === 0 ? `${h}h` : `${h}h ${m}min`;
+}
+
+// ════════════════════════════════════════
+// LEGGI FORM
+// ════════════════════════════════════════
+function leggiForm() {
+  const operai = [...document.querySelectorAll('.operaio-input')].map(i => i.value.trim()).filter(Boolean);
+  const materiali = [...document.querySelectorAll('.materiale-row')].map(row => {
+    const nome = row.querySelector('.mat-input').value.trim();
+    const qty  = row.querySelector('.qty-input').value.trim();
+    const unit = row.querySelector('.unit-badge').textContent;
+    return nome ? { nome, qty, unit } : null;
+  }).filter(Boolean);
+  return {
+    id: Date.now(),
+    data:       document.getElementById('data').value,
+    cantiere:   document.getElementById('cantiere').value.trim(),
+    operai,
+    oraInizio:  document.getElementById('ora-inizio').value,
+    oraFine:    document.getElementById('ora-fine').value,
+    oreTotali:  document.getElementById('ore-totali').textContent,
+    intervento: document.getElementById('intervento').value.trim(),
+    materiali,
+  };
+}
+
+// ════════════════════════════════════════
+// SALVA
+// ════════════════════════════════════════
+async function salvaBozza() {
+  const f = leggiForm();
+  if (!f.data) { mostraToast('⚠️ Inserisci almeno la data'); return; }
+  mostraLoading(true);
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save', foglio: f })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    mostraToast('✅ Foglio salvato!');
+    resetForm();
+    await caricaFogliRemoti();
+  } catch(e) {
+    mostraToast('⚠️ Errore salvataggio. Riprova.');
+    mostraLoading(false);
+  }
+}
+
+// ════════════════════════════════════════
+// RESET
+// ════════════════════════════════════════
+function resetForm() {
+  document.getElementById('data').value = today();
+  document.getElementById('cantiere').value = '';
+  document.getElementById('ora-inizio').value = '';
+  document.getElementById('ora-fine').value = '';
+  document.getElementById('ore-totali').textContent = '–';
+  document.getElementById('intervento').value = '';
+  document.getElementById('operai-container').innerHTML = '';
+  document.getElementById('materiali-container').innerHTML = '';
+  foglioCorrenteIdx = null;
+  aggiungiOperaio();
+  aggiungiMateriale();
+}
+
+// ════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════
+function apriModal(idx) {
+  foglioCorrenteIdx = idx;
+  const f = fogli[idx];
+  document.getElementById('modal-title').textContent =
+    `Foglio – ${f.cantiere || 'Cantiere'} · ${formataData(f.data)}`;
+
+  const righe = f.materiali.map(m =>
+    `<tr><td>${m.nome}</td><td>${m.qty || '–'}</td><td>${m.unit}</td></tr>`
+  ).join('') || '<tr><td colspan="3" style="color:var(--muted)">Nessun materiale</td></tr>';
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-field"><label>Data</label><p>${formataData(f.data)}</p></div>
+      <div class="detail-field"><label>Cantiere</label><p>${f.cantiere || '–'}</p></div>
+      <div class="detail-field"><label>Operai</label><p>${f.operai.join(', ') || '–'}</p></div>
+      <div class="detail-field"><label>Ore lavorate</label><p>${f.oraInizio || '–'} → ${f.oraFine || '–'} <strong>(${f.oreTotali})</strong></p></div>
+    </div>
+    ${f.intervento ? `<div style="margin-bottom:16px"><label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Intervento</label><p style="font-size:.9rem">${f.intervento}</p></div>` : ''}
+    <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:8px">Materiale</label>
+    <table class="detail-table">
+      <thead><tr><th>Materiale</th><th>Quantità</th><th>Unità</th></tr></thead>
+      <tbody>${righe}</tbody>
+    </table>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function chiudiModal(e) {
+  if (e.target === document.getElementById('modal-bg')) chiudiModalDiretto();
+}
+function chiudiModalDiretto() {
+  document.getElementById('modal-bg').classList.remove('open');
+}
+
+function modificaFoglio() {
+  if (foglioCorrenteIdx === null) return;
+  const f = fogli[foglioCorrenteIdx];
+  chiudiModalDiretto();
+  document.getElementById('data').value = f.data;
+  document.getElementById('cantiere').value = f.cantiere;
+  document.getElementById('ora-inizio').value = f.oraInizio;
+  document.getElementById('ora-fine').value = f.oraFine;
+  document.getElementById('intervento').value = f.intervento;
+  document.getElementById('operai-container').innerHTML = '';
+  f.operai.forEach(o => aggiungiOperaio(o));
+  document.getElementById('materiali-container').innerHTML = '';
+  f.materiali.forEach(m => {
+    const row = aggiungiMateriale(m.nome);
+    row.querySelector('.qty-input').value = m.qty;
+  });
+  calcolaOre();
+  // il foglio verrà eliminato dal remoto al prossimo salvataggio
+  fogli.splice(foglioCorrenteIdx, 1);
+  foglioCorrenteIdx = null;
+  document.querySelectorAll('.tab-btn')[0].click();
+  showTab('nuovo', document.querySelectorAll('.tab-btn')[0]);
+  mostraToast('✏️ Foglio caricato per la modifica');
+}
+
+async function eliminaFoglio(idx) {
+  if (!confirm('Eliminare questo foglio?')) return;
+  const f = fogli[idx];
+  mostraLoading(true);
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', id: f.id })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    mostraToast('🗑 Foglio eliminato');
+    await caricaFogliRemoti();
+  } catch(e) {
+    mostraToast('⚠️ Errore eliminazione. Riprova.');
+    mostraLoading(false);
+  }
+}
+
+// ════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════
+function formataData(d) {
+  if (!d) return '–';
+  const [y,m,g] = d.split('-');
+  return `${g}/${m}/${y}`;
+}
+
+// ════════════════════════════════════════
+// EXPORT PDF
+// ════════════════════════════════════════
+function esportaPDF() { generaPDF(leggiForm()); }
+function esportaPDFFoglio() {
+  if (foglioCorrenteIdx === null) return;
+  generaPDF(fogli[foglioCorrenteIdx]);
+}
+
+function generaPDF(f) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, L = 297, mg = 18;
+
+  doc.setFillColor(26, 58, 92);
+  doc.rect(0, 0, W, 30, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('FOGLIO LAVORO', mg, 13);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('ElecProject', mg, 20);
+  doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.text(formataData(f.data), W - mg, 13, { align: 'right' });
+
+  let y = 38;
+  doc.setTextColor(30, 43, 58);
+
+  function sezione(titolo) {
+    doc.setFillColor(245,246,250);
+    doc.roundedRect(mg, y, W - mg*2, 7, 2, 2, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor(122,136,153);
+    doc.text(titolo.toUpperCase(), mg+3, y+5);
+    doc.setTextColor(30,43,58);
+    y += 11;
+  }
+
+  function campo(label, val, col=1, tot=2) {
+    const cw = (W - mg*2) / tot;
+    const xOff = mg + (col-1)*cw;
+    doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+    doc.setTextColor(122,136,153);
+    doc.text(label.toUpperCase(), xOff, y);
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.setTextColor(30,43,58);
+    doc.text(val || '–', xOff, y+6);
+  }
+
+  sezione('Informazioni generali');
+  campo('Data', formataData(f.data), 1, 2);
+  campo('Cantiere / Indirizzo', f.cantiere || '–', 2, 2);
+  y += 14;
+  sezione('Operai');
+  campo('Effettuato da', f.operai.join(', ') || '–', 1, 1);
+  y += 14;
+  sezione('Orario di lavoro');
+  campo('Ora inizio', f.oraInizio || '–', 1, 3);
+  campo('Ora fine',   f.oraFine   || '–', 2, 3);
+  campo('Ore totali', f.oreTotali,          3, 3);
+  y += 14;
+
+  if (f.intervento) {
+    sezione('Intervento');
+    doc.setFontSize(9.5); doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(f.intervento, W - mg*2 - 4);
+    doc.text(lines, mg+2, y);
+    y += lines.length * 5.5 + 6;
+  }
+
+  if (f.materiali.length) {
+    sezione('Materiale utilizzato');
+    doc.setFillColor(26,58,92);
+    doc.rect(mg, y, W - mg*2, 7, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('MATERIALE', mg+3, y+5);
+    doc.text('QUANTITA', mg+100, y+5);
+    doc.text('UNITA', mg+130, y+5);
+    y += 8;
+    f.materiali.forEach((m, i) => {
+      if (i % 2 === 0) { doc.setFillColor(249,250,251); doc.rect(mg, y, W - mg*2, 7, 'F'); }
+      doc.setTextColor(30,43,58);
+      doc.setFontSize(9); doc.setFont('helvetica','normal');
+      doc.text(m.nome, mg+3, y+5.2);
+      doc.text(m.qty || '–', mg+100, y+5.2);
+      doc.text(m.unit, mg+130, y+5.2);
+      y += 7;
+    });
+  }
+
+  doc.setFillColor(26,58,92);
+  doc.rect(0, L-14, W, 14, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('ElecProject – Foglio Lavoro', mg, L-7);
+  doc.text(formataData(f.data), W - mg, L-7, { align: 'right' });
+
+  const nome = `foglio_${f.cantiere||'lavoro'}_${f.data||'data'}.pdf`.replace(/\s+/g,'_').toLowerCase();
+  doc.save(nome);
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+function mostraToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
