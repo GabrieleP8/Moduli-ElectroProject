@@ -791,10 +791,7 @@ function aggiungiMateriale(mat = '') {
       <div class="autocomplete-list" id="${uid}" style="display:none"></div>
     </div>
     <input type="number" placeholder="0" min="0" step="0.1" class="qty-input" />
-    <select class="unit-select">
-      <option value="">–</option>
-      <option value="mt">mt</option>
-    </select>
+    <input type="text" class="unit-select" placeholder="unità" />
     <button class="btn-del" onclick="this.closest('.materiale-row').remove()" title="Rimuovi">×</button>`;
 
   const inp    = row.querySelector('.mat-input');
@@ -811,9 +808,9 @@ function aggiungiMateriale(mat = '') {
   return row;
 }
 
-function aggiornaUnita(nome, select) {
+function aggiornaUnita(nome, input) {
   const found = MATERIALI_CATALOG.find(m => m.nome.toLowerCase() === nome.toLowerCase());
-  select.value = found ? found.unita : '';
+  input.value = found ? found.unita : '';
 }
 
 // ════════════════════════════════════════
