@@ -255,8 +255,6 @@
 <main>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('nuovo', this)">✏️ Nuovo Foglio</button>
-    <button class="tab-btn" onclick="showTab('archivio', this)">📂 Archivio</button>
-    <button class="tab-btn" onclick="showTab('cantieri', this)">🏗 Cantieri</button>
   </div>
 
   <!-- ── TAB NUOVO ── -->
@@ -307,36 +305,7 @@
     </div>
   </div>
 
-  <!-- ── TAB ARCHIVIO ── -->
-  <div class="tab-pane" id="tab-archivio">
-    <div class="archivio-toolbar">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="search-operaio" placeholder="Cerca per operaio..." oninput="renderArchivio()" />
-      </div>
-      <div class="multi-select-wrap" id="ms-wrap">
-        <button class="multi-select-btn" id="ms-btn" onclick="toggleMultiSelect()">
-          <span id="ms-label">👷 Tutti gli operai</span>
-          <span class="badge" id="ms-badge" style="display:none">0</span>
-        </button>
-        <div class="multi-select-dropdown" id="ms-dropdown">
-          <div id="ms-options"></div>
-          <div class="ms-reset-row"><button onclick="resetFiltroOperai()">✕ Deseleziona tutti</button></div>
-        </div>
-      </div>
-      <div class="view-toggle">
-        <button id="btn-view-lista" class="active" onclick="setView('lista')">☰ Lista</button>
-        <button id="btn-view-grouped" onclick="setView('grouped')">⊞ Gruppi</button>
-      </div>
-    </div>
-    <div id="lista-fogli"></div>
-  </div>
-
-  <!-- ── TAB CANTIERI ── -->
-  <div class="tab-pane" id="tab-cantieri">
-    <div id="riepilogo-cantieri"></div>
-  </div>
-</main>
+  </main>
 
 <!-- MODAL DETTAGLIO -->
 <div class="modal-bg" id="modal-bg" onclick="chiudiModal(event)">
@@ -635,59 +604,7 @@ function renderRiepilogoCantieri() {
   }).join('');
 }
 
-function apriDettaglioCantiere(cantiere) {
-  // switcha all'archivio filtrato per quel cantiere
-  // mostra la vista raggruppata e filtra
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-archivio').classList.add('active');
-  document.querySelectorAll('.tab-btn')[1].classList.add('active');
 
-  // azzera filtri e metti vista grouped
-  document.getElementById('search-operaio').value = '';
-  resetFiltroOperai();
-  vistaCorrente = 'grouped';
-  document.getElementById('btn-view-lista').classList.remove('active');
-  document.getElementById('btn-view-grouped').classList.add('active');
-
-  // filtra i fogli a quel cantiere manualmente
-  const el = document.getElementById('lista-fogli');
-  const fogliCantiere = fogli.filter(f =>
-    (f.cantiere || 'Cantiere non specificato').trim() === cantiere
-  );
-
-  const oreMin = sommaOreMinuti(fogliCantiere);
-  const operaiSet = [...new Set(fogliCantiere.flatMap(f => f.operai || []))];
-
-  const foliHtml = fogliCantiere.map(f => {
-    const idx = fogli.indexOf(f);
-    return `
-      <div class="foglio-card" onclick="apriModal(${idx})">
-        <div class="foglio-card-info">
-          <strong>${f.cantiere || '–'}</strong>
-          <p>${f.operai.join(', ') || '–'} · ${f.oreTotali !== '–' ? f.oreTotali : 'Ore n.d.'}</p>
-        </div>
-        <span class="foglio-card-date">${formataData(f.data)}</span>
-        <div class="foglio-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-ghost btn-sm" onclick="eliminaFoglio(${idx})">🗑</button>
-        </div>
-      </div>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="cantiere-group">
-      <div class="cantiere-header" onclick="toggleGruppo(this)">
-        <h3>📍 ${cantiere}</h3>
-        <div class="cantiere-stats">
-          <span class="stat-pill">${fogliCantiere.length} fogli</span>
-          <span class="stat-pill ore">⏱ ${minutiALabel(oreMin)}</span>
-          <span class="stat-pill">👷 ${operaiSet.join(', ')}</span>
-        </div>
-        <span class="cantiere-arrow">▾</span>
-      </div>
-      <div class="cantiere-fogli">${foliHtml}</div>
-    </div>`;
-}
 
 // ════════════════════════════════════════
 // HELPERS ORE
